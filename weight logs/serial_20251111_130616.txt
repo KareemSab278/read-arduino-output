@@ -1,0 +1,10 @@
+2025-11-11 13:06:24 
+2025-11-11 13:06:24 Scale starting...
+2025-11-11 13:06:24 Loaded calibration from EEPROM.
+2025-11-11 13:06:24 Ready. Commands: 'w' = run wizard, 't' = re-tare, 'p' = print cal.
+2025-11-11 13:06:31 {"grams":300.4,"product":"E5","event":"Addition"}
+2025-11-11 13:06:36 {"grams":-314.2,"product":"E5","event":"Removal"}
+2025-11-11 13:11:43 {"grams":2010.1,"product":"I9","event":"Addition"}
+2025-11-11 13:11:45 {"grams":-2005.6,"product":"I9","event":"Removal"}
+2025-11-11 13:13:35 {"grams":969.5,"product":"I9","event":"Addition"}
+2025-11-11 13:13:36 {"grams":-969.4,"product":"I9","event":"Removal"}
