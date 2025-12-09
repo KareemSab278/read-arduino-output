@@ -6,6 +6,9 @@ import { planogram, mapProductPositions } from "../data/planogram";
 import { UpdateCart } from "./UpdateCart";
 let UsbSerialPort;
 
+if (Platform.OS === "android") {
+  UsbSerialPort = require("react-native-usb-serialport-for-android");
+}
 
 // use lsusb on linux to find out 
 // VID = 2341
@@ -14,67 +17,30 @@ const ARDUINO_PRODUCT_ID = 0x0042;
 const ARDUINO_VENDOR_ID = 0x2341;
 const similarWeightMargin = 20;
 const takeErrorMargin = 50;
-
-if (Platform.OS === "android") {
-  UsbSerialPort = require("react-native-usb-serialport-for-android");
-}
-
-const { UsbSerialManager, Parity } = UsbSerialPort;
+const { UsbSerialManager, Parity } = UsbSerialPort; // no checks for other os - just android
 
 
 class WeightStack {
-  constructor() {
-    this.items = [];
-  }
-
-  push(element) {
-    this.items.push(element);
-  }
-
-  pop() {
-    if (this.isEmpty()) {
-      return null;
-    }
-    return this.items.pop();
-  }
-
-  peek() {
-    if (this.isEmpty()) {
-      return null;
-    }
-    return this.items[this.items.length - 1];
-  }
-
-  isEmpty() {
-    return this.items.length === 0;
-  }
-
-  size() {
-    return this.items.length;
-  }
-
-  clear() {
-    this.items = [];
-  }
+  #items = [];
+  push = (element) => this.#items.push(element);
+  pop = () => this.isEmpty() ? null : this.#items.pop();
+  peek = () => this.isEmpty() ? null : this.#items[this.#items.length - 1];
+  isEmpty = () => this.#items.length === 0;
+  size = () => this.#items.length;
+  clear = () => this.#items = [];
+  showStack = () => this.#items;
+  removeAllForProduct = (product) => this.#items = this.#items.filter(item => item.product !== product);
 
   getProductWeightFromStack = (product) => {
-    for (let i = this.items.length - 1; i >= 0; i--) {
-      if (this.items[i].product === product) {
-        return this.items[i].weight;
+    for (let i = this.#items.length - 1; i >= 0; i--) {
+      if (this.#items[i].product === product) {
+        return this.#items[i].weight;
       }
     }
     return null;
-
   };
-
-  showStack() {
-    return this.items;
-  }
-
-  removeAllForProduct(product) {
-    this.items = this.items.filter(item => item.product !== product);
-  }
 }
+
 const weightsStack = new WeightStack();
 
 
@@ -91,19 +57,6 @@ const currDateTime = (date = new Date()) => {
     pad(date.getSeconds())
   );
 }
-
-const convertRawToJson = (rawData) => {
-  const lines = rawData.split('\n').filter(line => line.trim() !== '');
-  return lines.map(line => {
-    try {
-      const obj = JSON.parse(line);
-      return { timestamp: currDateTime(), ...obj };
-    } catch (err) {
-      console.error(`Error parsing JSON: ${err}`);
-      return null;
-    }
-  }).filter(item => item !== null);
-};
 
 
 const logEverything = (parsedLogs, getState) => {
@@ -190,10 +143,7 @@ const findDiffOfWeights = (a, b) => { return Math.abs(a) - Math.abs(b) }; // if 
 
 const isWeightSimilar = (parsedLogs, similarWeightMargin) => {
   const diff = findDiffOfWeights(weightsStack.getProductWeightFromStack(parsedLogs.product), parsedLogs.grams);
-  if (diff <= similarWeightMargin) {
-    return true;
-  }
-  return false;
+  return diff <= similarWeightMargin;
 };
 
 
@@ -205,7 +155,6 @@ const validateTakeAction = (parsedLogs, productEntry, takeErrorMargin) => {
   }
   return true;
 }
-
 
 
 const addToWeightStack = (product, weight, action, getState) => {
@@ -285,9 +234,7 @@ const updateCartTrigger = (parsedLogs, dispatch, getState) => {
         if (validateTakeAction(parsedLogs, productEntry, takeErrorMargin)) {
           doTakeAction(parsedLogs, dispatch, getState, productEntry);
         }
-
         logEverything({ product: parsedLogs.product, grams: parsedLogs.grams, shelf: parsedLogs.shelf, action: parsedLogs.action }, getState);
-
 
       } else if (parsedLogs?.action === 'put') {
 
